@@ -1,3 +1,4 @@
+"""
 from flask import Flask, request, abort
 
 from linebot import LineBotApi, WebhookHandler
@@ -34,7 +35,7 @@ def callback():
 
     return "OK"
 
-"""
+
 # ======== 画像受信ハンドラ ========
 @handler.add(MessageEvent, message=ImageMessage)
 def handle_image(event):
@@ -58,15 +59,53 @@ def handle_image(event):
     )
 
 # ===================================
-"""
-    @handler.add(MessageEvent, message=ImageMessage)
-def handle_image(event):
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text="画像受け取ったよ！")
-    )
 
 
 
 if __name__ == "__main__":
     app.run(port=5000)
+"""
+from flask import Flask, request, abort
+
+from linebot import LineBotApi, WebhookHandler
+from linebot.exceptions import InvalidSignatureError
+from linebot.models import MessageEvent, ImageMessage, TextSendMessage
+
+app = Flask(__name__)
+
+# ======== LINE チャンネル情報 ========
+CHANNEL_ACCESS_TOKEN = "YOUR_ACCESS_TOKEN"
+CHANNEL_SECRET = "YOUR_CHANNEL_SECRET"
+
+line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
+handler = WebhookHandler(CHANNEL_SECRET)
+# ====================================
+
+@app.route("/")
+def index():
+    return "Hello from Render!"
+
+@app.route("/callback", methods=["POST"])
+def callback():
+    signature = request.headers.get("X-Line-Signature")
+    body = request.get_data(as_text=True)
+
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        abort(400)
+
+    return "OK"
+
+# ======== 画像受信ハンドラ ========
+@handler.add(MessageEvent, message=ImageMessage)
+def handle_image(event):
+    line_bot_api.reply_message(
+        event.reply_token,
+        TextSendMessage(text="画像を受け取りました！解析モジュールは未実装です。")
+    )
+# ===================================
+
+if __name__ == "__main__":
+    app.run(port=5000)
+
