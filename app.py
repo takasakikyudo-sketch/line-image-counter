@@ -9,4 +9,4 @@ def index():
 @app.route('/callback', methods=['POST'])
 def callback():
     print("Webhook received:", request.json)
-    return "OK"
+    return "OK", 200
