@@ -65,48 +65,31 @@ def handle_image(event):
 if __name__ == "__main__":
     app.run(port=5000)
 """
-from flask import Flask, request, abort
-
-from linebot import LineBotApi, WebhookHandler
-from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, ImageMessage, TextSendMessage
-
-app = Flask(__name__)
+import requests
+import json
 
 CHANNEL_ACCESS_TOKEN = "HQbj/0rUwacne8RnenycCX8RC+5bvS83k5Dj3ksI/iDiwuRAWFaVXAH6HFkZ0++nzTaAvvykPSJui75DSdOqRLCtKGa0cT6KjfIdAIo3PtNx5iYmEoZhUJLoKHC67jT1z5/q1ooQKn1y7rmRKpOKXwdB04t89/1O/w1cDnyilFU="
-CHANNEL_SECRET = "71abbc039ce27065bb7424aa50a0d695"
+USER_ID = "Ubd9e721258455d8ef386841259aca8ed"
 
-line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
-handler = WebhookHandler(CHANNEL_SECRET)
+def push_message(to, message):
+    url = "https://api.line.me/v2/bot/message/push"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
+    }
+    body = {
+        "to": to,
+        "messages": [
+            {
+                "type": "text",
+                "text": message
+            }
+        ]
+    }
 
+    response = requests.post(url, headers=headers, data=json.dumps(body))
+    print("status:", response.status_code)
+    print("response:", response.text)
 
-@app.route("/")
-def index():
-    return "OK"
-
-
-@app.route("/callback", methods=["POST"])
-def callback():
-    signature = request.headers.get("X-Line-Signature")
-    body = request.get_data(as_text=True)
-
-    try:
-        handler.handle(body, signature)
-    except InvalidSignatureError:
-        abort(400)
-
-    return "OK"
-
-
-@handler.add(MessageEvent, message=ImageMessage)
-def handle_image(event):
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text="画像OK！")
-    )
-
-
-if __name__ == "__main__":
-    app.run()
-
-
+# 実行
+push_message(USER_ID, "サーバーからのテスト送信です！")
