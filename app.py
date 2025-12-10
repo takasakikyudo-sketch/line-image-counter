@@ -15,9 +15,9 @@ from score import calculate_score
 
 app = Flask(__name__)
 
-LINE_CHANNEL_ACCESS_TOKEN = os.environ["LINE_CHANNEL_ACCESS_TOKEN"]
-LINE_CHANNEL_SECRET = os.environ["LINE_CHANNEL_SECRET"]
-SPREADSHEET_NAME = os.environ["SPREADSHEET_NAME"]
+LINE_CHANNEL_ACCESS_TOKEN = os.environ["HQbj/0rUwacne8RnenycCX8RC+5bvS83k5Dj3ksI/iDiwuRAWFaVXAH6HFkZ0++nzTaAvvykPSJui75DSdOqRLCtKGa0cT6KjfIdAIo3PtNx5iYmEoZhUJLoKHC67jT1z5/q1ooQKn1y7rmRKpOKXwdB04t89/1O/w1cDnyilFU="]
+LINE_CHANNEL_SECRET = os.environ["71abbc039ce27065bb7424aa50a0d695"]
+SPREADSHEET_NAME = os.environ["1DuGIy-R4ljgtHQ2NfKrZW8LoPLS_PuEFJELFF8Takbk"]
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 parser = WebhookParser(LINE_CHANNEL_SECRET)
