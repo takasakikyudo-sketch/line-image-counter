@@ -34,7 +34,7 @@ def callback():
 
     return "OK"
 
-
+"""
 # ======== 画像受信ハンドラ ========
 @handler.add(MessageEvent, message=ImageMessage)
 def handle_image(event):
@@ -58,6 +58,14 @@ def handle_image(event):
     )
 
 # ===================================
+"""
+    @handler.add(MessageEvent, message=ImageMessage)
+def handle_image(event):
+    line_bot_api.reply_message(
+        event.reply_token,
+        TextSendMessage(text="画像受け取ったよ！")
+    )
+
 
 
 if __name__ == "__main__":
