@@ -73,8 +73,8 @@ from linebot.models import MessageEvent, ImageMessage, TextSendMessage
 
 app = Flask(__name__)
 
-CHANNEL_ACCESS_TOKEN = "YOUR_ACCESS_TOKEN"
-CHANNEL_SECRET = "YOUR_SECRET"
+CHANNEL_ACCESS_TOKEN = "HQbj/0rUwacne8RnenycCX8RC+5bvS83k5Dj3ksI/iDiwuRAWFaVXAH6HFkZ0++nzTaAvvykPSJui75DSdOqRLCtKGa0cT6KjfIdAIo3PtNx5iYmEoZhUJLoKHC67jT1z5/q1ooQKn1y7rmRKpOKXwdB04t89/1O/w1cDnyilFU="
+CHANNEL_SECRET = "71abbc039ce27065bb7424aa50a0d695"
 
 line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(CHANNEL_SECRET)
