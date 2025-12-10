@@ -73,17 +73,17 @@ from linebot.models import MessageEvent, ImageMessage, TextSendMessage
 
 app = Flask(__name__)
 
-# ======== LINE チャンネル情報 ========
 CHANNEL_ACCESS_TOKEN = "YOUR_ACCESS_TOKEN"
-CHANNEL_SECRET = "YOUR_CHANNEL_SECRET"
+CHANNEL_SECRET = "YOUR_SECRET"
 
 line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(CHANNEL_SECRET)
-# ====================================
+
 
 @app.route("/")
 def index():
-    return "Hello from Render!"
+    return "OK"
+
 
 @app.route("/callback", methods=["POST"])
 def callback():
@@ -97,15 +97,16 @@ def callback():
 
     return "OK"
 
-# ======== 画像受信ハンドラ ========
+
 @handler.add(MessageEvent, message=ImageMessage)
 def handle_image(event):
     line_bot_api.reply_message(
         event.reply_token,
-        TextSendMessage(text="画像を受け取りました！解析モジュールは未実装です。")
+        TextSendMessage(text="画像OK！")
     )
-# ===================================
+
 
 if __name__ == "__main__":
-    app.run(port=5000)
+    app.run()
+
 
