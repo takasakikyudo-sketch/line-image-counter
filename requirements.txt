@@ -1,5 +1,8 @@
-Flask==2.2.5
-opencv-python-headless==4.7.0.72
-numpy==1.25.2
-google-cloud-vision==3.5.0
-requests==2.31.0
+flask
+gunicorn
+line-bot-sdk
+opencv-python-headless
+numpy
+pytesseract
+gspread
+google-auth
