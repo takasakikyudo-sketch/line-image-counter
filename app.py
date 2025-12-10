@@ -7,10 +7,15 @@ app = Flask(__name__)
 def index():
     return "Hello from Render!"
 
-@app.route('/callback', methods=['POST'])
-def callback():
-    print("Webhook received:", request.json)
-    return "OK", 200
+from linebot.models import MessageEvent, TextMessage, ImageMessage, TextSendMessage
+
+@handler.add(MessageEvent, message=ImageMessage)
+def handle_image(event):
+    line_bot_api.reply_message(
+        event.reply_token,
+        TextSendMessage(text="画像を受信しました！")
+    )
+
 
 
 @handler.add(MessageEvent, message=ImageMessage)
