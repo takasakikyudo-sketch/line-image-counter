@@ -2,6 +2,9 @@ import os
 import cv2
 import numpy as np
 import pytesseract
+import json
+import base64
+
 from flask import Flask, request
 
 from linebot import LineBotApi, WebhookParser
@@ -18,20 +21,33 @@ app = Flask(__name__)
 LINE_CHANNEL_ACCESS_TOKEN = os.environ["LINE_CHANNEL_ACCESS_TOKEN"]
 LINE_CHANNEL_SECRET = os.environ["LINE_CHANNEL_SECRET"]
 SPREADSHEET_NAME = os.environ["SPREADSHEET_NAME"]
+SERVICE_ACCOUNT_BASE64 = os.environ["SERVICE_ACCOUNT_JSON"]  # ←追加
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 parser = WebhookParser(LINE_CHANNEL_SECRET)
 
 
-# Google Sheets 接続
+# ★ service_account.json を環境変数から復元する関数
+def load_service_account():
+    if not SERVICE_ACCOUNT_BASE64:
+        raise Exception("SERVICE_ACCOUNT_JSON env var not set")
+
+    # Base64 → JSON 文字列 → dict
+    decoded = base64.b64decode(SERVICE_ACCOUNT_BASE64).decode("utf-8")
+    return json.loads(decoded)
+
+
+# Google Sheets への書き込み
 def write_to_sheet(name, score, total):
     scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-    creds = Credentials.from_service_account_file(
-        "service_account.json", scopes=scopes
-    )
+
+    service_info = load_service_account()
+    creds = Credentials.from_service_account_info(service_info, scopes=scopes)
+
     gc = gspread.authorize(creds)
     sh = gc.open(SPREADSHEET_NAME)
     ws = sh.sheet1
+
     ws.append_row([name, score, total])
 
 
@@ -40,7 +56,6 @@ def split_and_classify(img):
 
     h, w = img.shape[:2]
 
-    # グリッドとして、10×10 マスを例とする（必要なら調整）
     ROWS = 10
     COLS = 10
     cell_h = h // ROWS
@@ -62,7 +77,7 @@ def split_and_classify(img):
 # 最下部の名前を OCR
 def extract_name(img):
     h, w = img.shape[:2]
-    bottom_area = img[int(h*0.80):h, :]
+    bottom_area = img[int(h * 0.80):h, :]
     text = pytesseract.image_to_string(bottom_area, lang="jpn")
     return text.strip()
 
@@ -97,8 +112,7 @@ def handle_image(event):
     # スコア計算
     score, total = calculate_score(symbols)
 
-    # 名前抽出
-    # name = extract_name(img)
+    # 名前抽出（今は固定）
     name = "a"
 
     # Google Sheets へ保存
