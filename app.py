@@ -98,7 +98,8 @@ def handle_image(event):
     score, total = calculate_score(symbols)
 
     # 名前抽出
-    name = extract_name(img)
+    # name = extract_name(img)
+    name = "a"
 
     # Google Sheets へ保存
     write_to_sheet(name, score, total)
