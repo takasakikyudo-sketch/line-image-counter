@@ -7,7 +7,6 @@ from linebot.v3.webhooks import MessageEvent, ImageMessageContent
 from linebot.v3.messaging import (
     Configuration,
     ApiClient,
-    MessagingApi,
     MessagingApiBlob
 )
 
@@ -26,15 +25,12 @@ if not CHANNEL_SECRET or not CHANNEL_ACCESS_TOKEN:
 app = Flask(__name__, static_folder="static")
 
 # =========================
-# LINE SDK v3（正解構成）
+# LINE SDK v3
 # =========================
-configuration = Configuration(
-    access_token=CHANNEL_ACCESS_TOKEN
-)
+configuration = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
 api_client = ApiClient(configuration)
 
 handler = WebhookHandler(CHANNEL_SECRET)
-messaging_api = MessagingApi(api_client)
 messaging_api_blob = MessagingApiBlob(api_client)
 
 # =========================
@@ -61,15 +57,14 @@ def handle_image(event):
 
     message_id = event.message.id
 
-    # ✅ Blob API 正しい呼び方
-    content = messaging_api_blob.get_message_content(message_id)
-    image_bytes = content.read()
+    # ✅ v3 正解：bytes が直接返る
+    image_bytes = messaging_api_blob.get_message_content(message_id)
 
     save_path = "static/images/original.png"
     with open(save_path, "wb") as f:
         f.write(image_bytes)
 
-    print("画像保存完了:", save_path)
+    print("画像保存成功:", save_path)
 
 # =========================
 # Render / ローカル
