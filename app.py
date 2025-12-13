@@ -6,7 +6,8 @@ from flask import Flask, request, abort, send_from_directory
 from linebot.v3.webhook import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import MessagingApi
-from linebot.v3.messaging.models import MessageEvent, ImageMessageContent
+from linebot.v3.webhooks import MessageEvent, ImageMessageContent
+
 
 # =========================
 # LINE Bot 設定
