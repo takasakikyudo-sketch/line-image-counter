@@ -122,7 +122,7 @@ def split_and_save(img):
     cell_h = h / ROWS
     cell_w = w / COLS
 
-    files = []
+    urls = []
     for r in range(ROWS):
         for c in range(COLS):
             y1, y2 = int(r * cell_h), int((r + 1) * cell_h)
@@ -133,9 +133,10 @@ def split_and_save(img):
 
             name = f"{uuid.uuid4()}.png"
             cv2.imwrite(os.path.join(STATIC_DIR, name), cell)
-            files.append(name)
-
-    return files
+           
+            url = f"https://line-image-counter.onrender.com/static/results/{name}"
+            urls.append(url)
+    return urls
 
 
 # ========================
@@ -151,13 +152,13 @@ def process_image_async(image_bytes, reply_token):
         pts = find_green_points(img)
         img = denoise_image(img)
         warped = warp_rectangle(img, pts)
-        files = split_and_save(warped)
-
+        urls = split_and_save(warped)
+        preview = "\n".join(urls[:(ROWS*COLS)])
         messaging_api.reply_message(
             ReplyMessageRequest(
                 reply_token=reply_token,
                 messages=[
-                    TextMessage(text=f"処理完了：{len(files)}枚保存しました")
+                    TextMessage(text=f"処理完了：{len(urls)}枚保存しました{preview}")
                 ]
             )
         )
