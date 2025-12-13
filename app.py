@@ -19,12 +19,14 @@ from linebot.v3.exceptions import InvalidSignatureError
 CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 
+
+handler = WebhookHandler(CHANNEL_SECRET)
 configuration = Configuration(
     access_token=CHANNEL_ACCESS_TOKEN
 )
 
-handler = WebhookHandler(CHANNEL_SECRET)
 messaging_api = MessagingApi(configuration)
+
 
 # =========================
 # Flask
