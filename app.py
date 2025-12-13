@@ -1,137 +1,81 @@
 import os
 import cv2
 import numpy as np
-from flask import Flask, request
+from flask import Flask, request, abort, send_from_directory
 
-from linebot import LineBotApi, WebhookParser
-from linebot.models import MessageEvent, ImageMessage, TextMessage, TextSendMessage
+from linebot.v3.webhook import WebhookHandler
+from linebot.v3.exceptions import InvalidSignatureError
+from linebot.v3.messaging import MessagingApi
+from linebot.v3.messaging.models import MessageEvent, ImageMessageContent
 
-from board import extract_board, split_board
-from classifier import classify_symbol
-from score import calculate_score
+# =========================
+# LINE Bot 設定
+# =========================
+CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
+CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 
+handler = WebhookHandler(CHANNEL_SECRET)
+messaging_api = MessagingApi(
+    channel_access_token=CHANNEL_ACCESS_TOKEN
+)
+
+# =========================
+# Flask
+# =========================
 app = Flask(__name__)
 
-LINE_CHANNEL_ACCESS_TOKEN = os.environ["LINE_CHANNEL_ACCESS_TOKEN"]
-LINE_CHANNEL_SECRET = os.environ["LINE_CHANNEL_SECRET"]
-
-line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
-parser = WebhookParser(LINE_CHANNEL_SECRET)
-
-# --- ユーザーごとの設定を保持 ---
-user_grid_setting = {}   # user_id → (ROWS, COLS)
-
-
-# =========================
-#  LINE Webhook
-# =========================
-@app.route("/callback", methods=['POST'])
+@app.route("/callback", methods=["POST"])
 def callback():
+    signature = request.headers.get("X-Line-Signature")
     body = request.get_data(as_text=True)
-    signature = request.headers["X-Line-Signature"]
-    events = parser.parse(body, signature)
 
-    for event in events:
-        if isinstance(event, MessageEvent):
-
-            # --- テキストメッセージ（行列設定）---
-            if isinstance(event.message, TextMessage):
-                handle_text(event)
-
-            # --- 画像メッセージ ---
-            if isinstance(event.message, ImageMessage):
-                handle_image(event)
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        abort(400)
 
     return "OK"
 
+# =========================
+# 画像公開用
+# =========================
+@app.route("/images/<filename>")
+def images(filename):
+    return send_from_directory("static", filename)
 
 # =========================
-#  行列設定（例：10x12）
+# LINE 画像受信処理
 # =========================
-def handle_text(event):
-    user_id = event.source.user_id
-    text = event.message.text.strip()
-
-    # 書式：10x12, 10×12, 10 12 など
-    import re
-    m = re.match(r"(\d+)\s*[xX× ]\s*(\d+)", text)
-
-    if m:
-        rows = int(m.group(1))
-        cols = int(m.group(2))
-        user_grid_setting[user_id] = (rows, cols)
-
-        reply = f"盤面サイズを設定しました： {rows} 行 × {cols} 列\n次に画像を送ってください！"
-    else:
-        reply = "行列の形式が正しくありません。\n例：10x12、8 8、5×5"
-
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text=reply)
-    )
-
-
-# =========================
-# 画像処理
-# =========================
+@handler.add(MessageEvent, message=ImageMessageContent)
 def handle_image(event):
-    user_id = event.source.user_id
-
-    # 行列が設定されていない
-    if user_id not in user_grid_setting:
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text="先に『10x10』のように行数と列数を送ってください！")
-        )
-        return
-
-    ROWS, COLS = user_grid_setting[user_id]
-
-    # --- 画像取得 ---
+    # 画像取得
     message_id = event.message.id
-    content = line_bot_api.get_message_content(message_id)
-    img_data = content.content
+    content = messaging_api.get_message_content(message_id)
 
-    img_array = np.asarray(bytearray(img_data), dtype=np.uint8)
-    img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+    os.makedirs("static", exist_ok=True)
+    img_path = "static/input.jpg"
 
-    try:
-        # --- 四隅マーカーで盤面抽出 ---
-        board = extract_board(img)
+    with open(img_path, "wb") as f:
+        for chunk in content.iter_content():
+            f.write(chunk)
 
-        # --- 盤面分割 ---
-        cells = split_board(board, ROWS, COLS)
+    # ===== 画像処理 =====
+    img = cv2.imread(img_path)
 
-        # --- 記号分類 ---
-        symbols = [classify_symbol(c) for c in cells]
+    green_pts = find_green_points(img)
+    squares = split_rectangle(img, green_pts, rows=5, cols=5)
 
-        # --- スコア計算 ---
-        score, total = calculate_score(symbols)
+    # 0行0列目を保存
+    cv2.imwrite("static/reply.png", squares[0][0])
 
-        reply = (
-            f"解析結果\n"
-            f"行列：{ROWS}×{COLS}\n"
-            f"スコア：{score}\n"
-            f"トータル：{total}"
-        )
-
-    except Exception as e:
-        reply = f"エラー: {str(e)}\n画像の四隅にマーカーがありますか？"
-
-    # --- 返信 ---
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text=reply)
-    )
-
+    # ※返信しない（保存のみ）
 
 # =========================
-# ルート
+# 緑点検出・分割関数（前と同じ）
 # =========================
-@app.route("/")
-def home():
-    return "LINE Bot is running!"
-
+# find_green_points(...)
+# split_rectangle(...)
+# sort_rectangle_points(...)
 
 if __name__ == "__main__":
-    app.run(port=8080)
+    app.run(host="0.0.0.0", port=8000)
