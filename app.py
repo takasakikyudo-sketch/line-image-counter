@@ -153,6 +153,21 @@ def find_green_points(img):
 
     return ordered
 
+def denoise_image(img):
+    # ガウシアンブラー（軽いノイズ除去）
+    img = cv2.GaussianBlur(img, (5, 5), 0)
+
+    # カラー画像用ノイズ除去（かなり強力）
+    img = cv2.fastNlMeansDenoisingColored(
+        img,
+        None,
+        h=10,        # 明るさノイズ
+        hColor=10,   # 色ノイズ
+        templateWindowSize=7,
+        searchWindowSize=21
+    )
+
+    return img
 
 def warp_rectangle(img, pts):
     """長方形に補正"""
@@ -231,6 +246,7 @@ def handle_image(event):
 
     # 処理
     pts = find_green_points(img)
+    img_denoised = denoise_image(img)
     warped = warp_rectangle(img, pts)
     files = split_and_save(warped)
 
