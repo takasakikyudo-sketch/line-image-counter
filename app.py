@@ -1,5 +1,5 @@
-
 """
+
 import os
 import uuid
 import cv2
@@ -200,6 +200,7 @@ def handle_image(event):
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
 """
+
 import os
 import uuid
 import threading
