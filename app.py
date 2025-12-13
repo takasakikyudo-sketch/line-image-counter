@@ -20,7 +20,8 @@ from linebot.v3.messaging import (
 CHANNEL_ACCESS_TOKEN = os.environ["LINE_CHANNEL_ACCESS_TOKEN"]
 CHANNEL_SECRET = os.environ["LINE_CHANNEL_SECRET"]
 
-
+ROWS = 4
+COLS = 4
 CELL_SIZE = 64
 
 STATIC_DIR = "static/results"
@@ -158,10 +159,11 @@ def callback():
     return "OK"
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text(event):
+    global ROWS,COLS
     try:
-        r, l = map(int, event.message.text.split())
+        ROWS, COLS = map(int, event.message.text.split())
         # ここで r 行 × l 列 を保存 or 使用
-        print(f"行数={r}, 列数={l}")
+        print(f"行数={ROWS}, 列数={COLS}")
     except:
         # 入力形式が違うとき
         line_bot_api.reply_message(
@@ -169,8 +171,7 @@ def handle_text(event):
             TextSendMessage(text="行数 列数 を半角スペース区切りで送ってください（例: 5 5）")
         )
 
-ROWS = r
-COLS = l
+
 @handler.add(MessageEvent, message=ImageMessageContent)
 def handle_image(event):
     message_id = event.message.id
