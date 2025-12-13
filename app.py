@@ -158,7 +158,7 @@ def callback():
         abort(400)
 
     return "OK"
-@handler.add(MessageEvent, message=TextMessage)
+@handler.add(MessageEvent, message=TextMessageContent)
 def handle_text(event):
     global ROWS,COLS
     try:
