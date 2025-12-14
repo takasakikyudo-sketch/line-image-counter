@@ -153,12 +153,12 @@ def process_image_async(image_bytes, reply_token):
         img = denoise_image(img)
         warped = warp_rectangle(img, pts)
         urls = split_and_save(warped)
-        preview = "\n".join(urls[:(ROWS*COLS)])
+        
         messaging_api.reply_message(
             ReplyMessageRequest(
                 reply_token=reply_token,
                 messages=[
-                    TextMessage(text=f"処理完了：{len(urls)}枚保存しました{preview}")
+                    TextMessage(text=f"処理完了：{len(urls)}枚保存しました")
                 ]
             )
         )
