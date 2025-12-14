@@ -21,7 +21,7 @@ from linebot.v3.messaging import (
 )
 from tensorflow.keras.models import load_model
 
-MODEL = load_model("model.keras")
+MODEL = load_model("model64.keras")
 
 CLASS_NAMES = [
     "circle",
