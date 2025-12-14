@@ -197,7 +197,7 @@ def calc_column_scores(cells_2d):
 def process_image_async(image_bytes, reply_token):
     try:
 
-        image_bytes = messaging_blob_api.get_message_content(message_id)
+        
         img_array = np.frombuffer(image_bytes, np.uint8)
         img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
 
