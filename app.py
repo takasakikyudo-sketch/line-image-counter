@@ -170,39 +170,38 @@ def split_cells(img):
 
     return cells
 
-
-def predict_score(cell_img):
-    """
-    cell_img: 64x64 グレースケール or BGR
-    戻り値: 点数(int)
-    """
-
-
-
-    pred = MODEL.predict(cell_img)
-    idx=pred.argmax()
-    cls = CLASS_NAMES[idx]
-
-    return SCORE_MAP[cls]
 def calc_column_scores(cells_2d):
     """
-    cells_2d: [row][col] に 64x64画像が入った2次元配列
-    戻り値: 列ごとの正規化スコア（右→左）
+    cells_2d: [row][col] -> (1,64,64,1)
     """
+    all_cells = []
+    index_map = []  # (row, col)
 
+    for row in range(ROWS):
+        for col in range(COLS):
+            all_cells.append(cells_2d[row][col])
+            index_map.append((row, col))
+
+    # (N,64,64,1)
+    batch = np.vstack(all_cells)
+
+    print("predict batch start", flush=True)
+    preds = MODEL.predict(batch, verbose=0)
+    print("predict batch end", flush=True)
+
+    # クラス → 点数
+    scores = {}
+    for (row, col), pred in zip(index_map, preds):
+        cls = CLASS_NAMES[pred.argmax()]
+        scores[(row, col)] = SCORE_MAP[cls]
+
+    # 列ごとに集計（右→左）
     results = []
-
-    for col in reversed(range(COLS)):  # 右 → 左
-        col_score = 0
-
-        for row in range(ROWS):
-            col_score += predict_score(cells_2d[row][col])
-
-        normalized = col_score / (2 * ROWS)
-        results.append(normalized)
+    for col in reversed(range(COLS)):
+        col_score = sum(scores[(row, col)] for row in range(ROWS))
+        results.append(col_score / (2 * ROWS))
 
     return results
-
 # ========================
 # 非同期処理本体
 # ========================
