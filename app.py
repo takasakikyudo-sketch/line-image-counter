@@ -179,7 +179,7 @@ def predict_score(cell_img):
 
 
 
-    pred = MODEL.predict(img, verbose=0)
+    pred = MODEL.predict(cell_img, verbose=0)
     cls = CLASS_NAMES[np.argmax(pred)]
 
     return SCORE_MAP[cls]
