@@ -147,8 +147,9 @@ def split_cells(img):
             cell = img[y1:y2, x1:x2]
             cell = cv2.resize(cell, (64, 64))
 
-            # 前に作った処理
-            cell = color_to_white_and_grayscale(cell)
+            cell = Image.open(IMAGE_PATH).convert("L").resize((64, 64))
+            cell = np.array(cell) / 255.0
+            cell = cell.reshape(1, 64, 64, 1)
 
             cells[r][c] = cell
 
