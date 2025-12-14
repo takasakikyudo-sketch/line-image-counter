@@ -179,8 +179,9 @@ def predict_score(cell_img):
 
 
 
-    pred = MODEL.predict(cell_img, verbose=0)
-    cls = CLASS_NAMES[np.argmax(pred)]
+    pred = MODEL.predict(cell_img)
+    idx=pred.argmax()
+    cls = CLASS_NAMES[idx]
 
     return SCORE_MAP[cls]
 def calc_column_scores(cells_2d):
