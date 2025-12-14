@@ -177,12 +177,7 @@ def predict_score(cell_img):
     戻り値: 点数(int)
     """
 
-    # グレースケール → 3ch に揃える（モデル仕様依存）
-    if len(cell_img.shape) == 2:
-        cell_img = cv2.cvtColor(cell_img, cv2.COLOR_GRAY2BGR)
 
-    img = cell_img.astype("float32") / 255.0
-    img = np.expand_dims(img, axis=0)
 
     pred = MODEL.predict(img, verbose=0)
     cls = CLASS_NAMES[np.argmax(pred)]
