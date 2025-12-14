@@ -215,11 +215,14 @@ def process_image_async(image_bytes, reply_token):
 
         pts = find_green_points(img)
         img_denoised = denoise_image(img)
+        print("warped start")
         warped = warp_rectangle(img_denoised, pts)
-
+        print("split_cells start")
         cells = split_cells(warped)
+        print("calc_column_scores start")
+        
         scores = calc_column_scores(cells)
-
+        print(scores)
         # 表示用テキスト
         text = "スコア\n"
         for i, s in enumerate(scores, 1):
