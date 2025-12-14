@@ -20,7 +20,7 @@ from linebot.v3.messaging import (
     TextMessage
 )
 from tensorflow.keras.models import load_model
-
+from PIL import Image
 MODEL = load_model("model64.keras")
 
 CLASS_NAMES = [
