@@ -210,7 +210,7 @@ def process_image_async(image_bytes, reply_token):
         scores = calc_column_scores(cells)
 
         # 表示用テキスト
-        text = "列ごとのスコア（右→左）\n"
+        text = "スコア\n"
         for i, s in enumerate(scores, 1):
             text += f"{i}列目: {s:.2f}\n"
 
