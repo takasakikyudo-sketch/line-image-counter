@@ -20,7 +20,7 @@ from linebot.v3.messaging import (
     TextMessage
 )
 from tensorflow.keras.models import load_model
-from PIL import Image
+
 MODEL = load_model("model64.keras")
 
 CLASS_NAMES = [
@@ -147,8 +147,23 @@ def split_cells(img):
             cell = img[y1:y2, x1:x2]
             cell = cv2.resize(cell, (64, 64))
 
-            cell = Image.open(IMAGE_PATH).convert("L").resize((64, 64))
-            cell = np.array(cell) / 255.0
+            # BGR → HSV
+            hsv = cv2.cvtColor(cell, cv2.COLOR_BGR2HSV)
+
+            # 色マスク（青・緑・赤）
+            mask_blue  = cv2.inRange(hsv, (100, 50, 50), (130, 255, 255))
+            mask_green = cv2.inRange(hsv, (40, 50, 50), (80, 255, 255))
+            mask_red1  = cv2.inRange(hsv, (0, 50, 50), (10, 255, 255))
+            mask_red2  = cv2.inRange(hsv, (170, 50, 50), (180, 255, 255))
+
+            mask = mask_blue | mask_green | mask_red1 | mask_red2
+            cell[mask > 0] = [255, 255, 255]
+            cell = cv2.cvtColor(cell, cv2.COLOR_BGR2GRAY)
+
+            # 正規化
+            cell = cell.astype("float32") / 255.0
+
+            # モデル入力形状へ
             cell = cell.reshape(1, 64, 64, 1)
 
             cells[r][c] = cell
