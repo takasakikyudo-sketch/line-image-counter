@@ -1,7 +1,3 @@
-
-
-
-
 import os
 import uuid
 import threading
@@ -23,6 +19,23 @@ from linebot.v3.messaging import (
     ReplyMessageRequest,
     TextMessage
 )
+from tensorflow.keras.models import load_model
+
+MODEL = load_model("model.keras")
+
+CLASS_NAMES = [
+    "circle",
+    "cross",
+    "lcrosscircle",
+    "rcrosscircle"
+]
+
+SCORE_MAP = {
+    "circle": 2,
+    "cross": 0,
+    "lcrosscircle": 1,
+    "rcrosscircle": 1
+}
 
 # ========================
 # 環境変数
@@ -117,49 +130,94 @@ def warp_rectangle(img, pts):
     return cv2.warpPerspective(img, M, (w, h))
 
 
-def split_and_save(img):
+def split_cells(img):
     h, w = img.shape[:2]
     cell_h = h / ROWS
     cell_w = w / COLS
 
-    urls = []
+    cells = [[None]*COLS for _ in range(ROWS)]
+
     for r in range(ROWS):
         for c in range(COLS):
-            y1, y2 = int(r * cell_h), int((r + 1) * cell_h)
-            x1, x2 = int(c * cell_w), int((c + 1) * cell_w)
+            y1 = int(r * cell_h)
+            y2 = int((r + 1) * cell_h)
+            x1 = int(c * cell_w)
+            x2 = int((c + 1) * cell_w)
 
             cell = img[y1:y2, x1:x2]
-            cell = cv2.resize(cell, (CELL_SIZE, CELL_SIZE))
+            cell = cv2.resize(cell, (64, 64))
 
-            name = f"{uuid.uuid4()}.png"
-            cv2.imwrite(os.path.join(STATIC_DIR, name), cell)
-           
-            url = f"https://line-image-counter.onrender.com/static/results/{name}"
-            urls.append(url)
-    return urls
+            # 前に作った処理
+            cell = color_to_white_and_grayscale(cell)
 
+            cells[r][c] = cell
+
+    return cells
+
+
+def predict_score(cell_img):
+    """
+    cell_img: 64x64 グレースケール or BGR
+    戻り値: 点数(int)
+    """
+
+    # グレースケール → 3ch に揃える（モデル仕様依存）
+    if len(cell_img.shape) == 2:
+        cell_img = cv2.cvtColor(cell_img, cv2.COLOR_GRAY2BGR)
+
+    img = cell_img.astype("float32") / 255.0
+    img = np.expand_dims(img, axis=0)
+
+    pred = MODEL.predict(img, verbose=0)
+    cls = CLASS_NAMES[np.argmax(pred)]
+
+    return SCORE_MAP[cls]
+def calc_column_scores(cells_2d):
+    """
+    cells_2d: [row][col] に 64x64画像が入った2次元配列
+    戻り値: 列ごとの正規化スコア（右→左）
+    """
+
+    results = []
+
+    for col in reversed(range(COLS)):  # 右 → 左
+        col_score = 0
+
+        for row in range(ROWS):
+            col_score += predict_score(cells_2d[row][col])
+
+        normalized = col_score / (2 * ROWS)
+        results.append(normalized)
+
+    return results
 
 # ========================
 # 非同期処理本体
 # ========================
 def process_image_async(image_bytes, reply_token):
     try:
-        img = cv2.imdecode(
-            np.frombuffer(image_bytes, np.uint8),
-            cv2.IMREAD_COLOR
-        )
+        message_id = event.message.id
+
+        image_bytes = messaging_blob_api.get_message_content(message_id)
+        img_array = np.frombuffer(image_bytes, np.uint8)
+        img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
 
         pts = find_green_points(img)
-        img = denoise_image(img)
-        warped = warp_rectangle(img, pts)
-        urls = split_and_save(warped)
-        
+        img_denoised = denoise_image(img)
+        warped = warp_rectangle(img_denoised, pts)
+
+        cells = split_cells(warped)
+        scores = calc_column_scores(cells)
+
+        # 表示用テキスト
+        text = "列ごとのスコア（右→左）\n"
+        for i, s in enumerate(scores, 1):
+            text += f"{i}列目: {s:.2f}\n"
+
         messaging_api.reply_message(
             ReplyMessageRequest(
-                reply_token=reply_token,
-                messages=[
-                    TextMessage(text=f"処理完了：{len(urls)}枚保存しました")
-                ]
+                reply_token=event.reply_token,
+                messages=[TextMessage(text=text)]
             )
         )
 
