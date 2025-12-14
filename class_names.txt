@@ -1,0 +1,4 @@
+circle
+cross
+lcrosscircle
+rcrosscircle
