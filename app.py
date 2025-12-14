@@ -196,7 +196,6 @@ def calc_column_scores(cells_2d):
 # ========================
 def process_image_async(image_bytes, reply_token):
     try:
-        message_id = event.message.id
 
         image_bytes = messaging_blob_api.get_message_content(message_id)
         img_array = np.frombuffer(image_bytes, np.uint8)
