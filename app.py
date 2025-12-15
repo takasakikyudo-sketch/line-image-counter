@@ -229,7 +229,7 @@ def process_image_async(image_bytes, reply_token):
 
         messaging_api.reply_message(
             ReplyMessageRequest(
-                reply_token=event.reply_token,
+                reply_token=reply_token,
                 messages=[TextMessage(text=text)]
             )
         )
@@ -290,7 +290,7 @@ def handle_image(event):
         return
     PROCESSED_IDS.add(message_id)
 
-    image_bytes = messaging_blob_api.get_message_content(message_id)
+    image_bytes = messaging_blob_api.get_message_content(message_id).data
 
     # 非同期実行
     threading.Thread(
