@@ -290,7 +290,7 @@ def handle_image(event):
         return
     PROCESSED_IDS.add(message_id)
 
-    image_bytes = messaging_blob_api.get_message_content(message_id).data
+    image_bytes = messaging_blob_api.get_message_content(message_id)
 
     # 非同期実行
     threading.Thread(
