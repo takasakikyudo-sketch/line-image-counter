@@ -3,6 +3,9 @@ import uuid
 import threading
 import cv2
 import numpy as np
+import tensorflow as tf
+
+tf.config.threading.set_intra_op_parallelism_threads(1)
 from flask import Flask, request, abort
 
 from linebot.v3 import WebhookHandler
